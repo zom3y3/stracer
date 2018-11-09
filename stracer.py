@@ -1258,11 +1258,11 @@ if __name__ == "__main__":
         mkdirs = s.report['special']['mkdir']
         if len(unlinks) > 0:
             print '> Mkdir: '
-            for unlink in unlinks:
-                if unlink['error']:
-                    print '\t' + unlink['file_name'], unlink['error_info']
+            for mkdir in mkdirs:
+                if mkdir['error']:
+                    print '\t' + mkdir['file_name'], mkdir['error_info']
                 else:
-                    print '\t' + unlink['file_name']
+                    print '\t' + mkdir['file_name']
 
         networks = s.report['network']
         if len(networks) > 0:
