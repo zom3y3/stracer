@@ -1256,7 +1256,7 @@ if __name__ == "__main__":
                     print '\t' + unlink['file_name']
 
         mkdirs = s.report['special']['mkdir']
-        if len(unlinks) > 0:
+        if len(mkdirs) > 0:
             print '> Mkdir: '
             for mkdir in mkdirs:
                 if mkdir['error']:
