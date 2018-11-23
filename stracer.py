@@ -14,6 +14,9 @@ import logging
 import shutil
 import ssdeep
 import os
+
+DROP_FLODER = '/tmp/'
+
 import hashlib
 def file_md5(file):
     if os.path.exists(file):
@@ -22,9 +25,6 @@ def file_md5(file):
         md5 = m.hexdigest()
         f.close()
         return md5
-        
-DROP_FLODER = '/tmp/'
-
 
 from optparse import OptionParser
 from datetime import timedelta, time, datetime
@@ -862,14 +862,14 @@ class StatSpecialSyscall(StatBase):
             if result["syscall"] in self.open_syscalls and 'O_CREAT' in result["args"][1]:
                 self.parseSpecials(result, 'create')
 
-            if result["syscall"] in self.write_syscalls and result["args"][0] == '1':
+            if result["syscall"] in self.write_syscalls and (result["args"][0] == '1' or result["args"][0].startswith('1<')):
                 tmp_stdout = {}
                 tmp_stdout['pid'] = int(result["pid"]) if self._straceOptions["havePid"] else 0
                 tmp_stdout['data'] = result["args"][1][1:-1]
                 tmp_stdout['bytes'] = result["args"][2]
                 self.specials['stdout'].append(tmp_stdout)
 
-            if result["syscall"] in self.write_syscalls and result["args"][0] == '2':
+            if result["syscall"] in self.write_syscalls and (result["args"][0] == '2' or result["args"][0].startswith('2<')):
                 tmp_stderr = {}
                 tmp_stderr['pid'] = int(result["pid"]) if self._straceOptions["havePid"] else 0
                 tmp_stderr['data'] = result["args"][1][1:-1]
@@ -981,7 +981,7 @@ class StatStatics(StatBase):
         tmp_syscall['timestamp'] = str(result["startTime"])
         tmp_syscall['pointer'] = result['pointer'] if self._straceOptions["havePointer"] else 0
         tmp_syscall['syscall'] = result["syscall"]
-        self.syscall_order += result["syscall"] + '\n'
+        self.syscall_order += result["syscall"]
         tmp_syscall['args'] = result["args"]
         tmp_syscall['return'] = result["return"]
         tmp_syscall['error'] = result['error']
