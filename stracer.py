@@ -17,17 +17,15 @@ import os
 
 DROP_FLODER = '/tmp/'
 
-try:
-    from core.util import file_md5
-except Exception as e:
-    import hashlib
-    def file_md5(file):
-        if os.path.exists(file):
-            f = open(file, 'rb')
-            m = hashlib.md5(f.read())
-            md5 = m.hexdigest()
-            f.close()
-            return md5
+
+import hashlib
+def file_md5(file):
+    if os.path.exists(file):
+        f = open(file, 'rb')
+        m = hashlib.md5(f.read())
+        md5 = m.hexdigest()
+        f.close()
+        return md5
 
 from optparse import OptionParser
 from datetime import timedelta, time, datetime
