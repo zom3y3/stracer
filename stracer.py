@@ -17,14 +17,17 @@ import os
 
 DROP_FLODER = '/tmp/'
 
-import hashlib
-def file_md5(file):
-    if os.path.exists(file):
-        f = open(file, 'rb')
-        m = hashlib.md5(f.read())
-        md5 = m.hexdigest()
-        f.close()
-        return md5
+try:
+    from core.util import file_md5
+except Exception as e:
+    import hashlib
+    def file_md5(file):
+        if os.path.exists(file):
+            f = open(file, 'rb')
+            m = hashlib.md5(f.read())
+            md5 = m.hexdigest()
+            f.close()
+            return md5
 
 from optparse import OptionParser
 from datetime import timedelta, time, datetime
@@ -119,7 +122,7 @@ class StraceParser:
             post = m2.group(4)
             havePointer = True
         else:
-            print "_detectLineFormat: Failed: unable to match the line, give up detection."
+            # print "_detectLineFormat: Failed: unable to match the line, give up detection."
             return
 
         if pre != '':
@@ -714,7 +717,10 @@ class StatFileIO(StatBase):
             # stat read/write
             if result["syscall"] == "read":
                 self._fidStatList[pid][fid][1] += 1
-                self._fidStatList[pid][fid][2] += int(result["return"])
+                try:
+                    self._fidStatList[pid][fid][2] += int(result["return"])
+                except Exception as e:
+                    pass
                 self._fidStatList[pid][fid][5] += result["args"][1][1:-1].decode("string_escape")
             if result["syscall"] == "write":
                 self._fidStatList[pid][fid][3] += 1
@@ -960,6 +966,7 @@ class StatStatics(StatBase):
         self._straceOptions = {}
         self.result = {}
         self.syscall_order = ''
+        self.result['summary'] = ''
         self.result['syscall'] = []
         self.result['syscall_ssdeep'] = ''
 
@@ -1182,10 +1189,25 @@ class StraceAnalysiser:
 
     def handle(self):
         self.runstats()
-        self.parser_ptree()
-        self.parser_fileio()
-        self.parser_special()
-        self.parser_stats()
+        try:
+            self.parser_ptree()
+        except Exception as e:
+            pass
+
+        try:
+            self.parser_fileio()
+        except Exception as e:
+            pass
+
+        try:
+            self.parser_special()
+        except Exception as e:
+            pass
+
+        try:
+            self.parser_stats()
+        except Exception as e:
+            pass
 
 
 if __name__ == "__main__":
@@ -1196,57 +1218,57 @@ if __name__ == "__main__":
     # f.write(j)
     # f.close()
     print '************** Strace Analysiser **************'
-    if s.report:
+    strace_report = s.report
+    if strace_report:
         print '> Run log: '
-        if s.report['runlog']['stats']:
+        if strace_report['runlog']['stats']:
             print 'Stats: Sucess'
+        elif strace_report['runlog']['type'] == 'exited':
+            print 'Stats: Process Exited'
         else:
-            print 'Stats: Failed', "Type:", s.report['runlog']['type'], "Info:", s.report['runlog']['error_info']
+            print 'Stats: Failed', "Type:", strace_report['runlog']['type'], "Info:", strace_report['runlog']['error_info']
 
-        print '> Strace summary: '
-        print s.report['stats']['summary']
+        if strace_report['stats']['summary']:
+            print strace_report['stats']['summary']
 
-        print '> Syscall ssdeep: '
-        # print s.report['stats']['syscall_order']
+        if strace_report['ptree'].has_key('result'):
+            print '> Process Tree: '
+            print strace_report['ptree']['result']
 
-        print s.report['stats']['syscall_ssdeep']
-
-        print '> Process Tree: '
-        print s.report['ptree']['result']
-
-        creates = s.report['file']['create']
-        if len(creates) > 0:
-            print '> Create Files: '
-            for create in creates:
-                flag = ''
-                if create['is_close'] == '1':
+        if strace_report['file'].has_key('create'):
+            creates = strace_report['file']['create']
+            if len(creates) > 0:
+                print '> Create Files: '
+                for create in creates:
                     flag = ''
-                else:
-                    flag = '*'
+                    if create['is_close'] == '1':
+                        flag = ''
+                    else:
+                        flag = '*'
 
-                print '\t' + create['file_name'] + ' ' + flag + '\t' + create['file_md5'] + '\t' + create['file_size']
+                    print '\t' + create['file_name'] + ' ' + flag + '\t' + create['file_md5'] + '\t' + create['file_size']
 
-        std = s.report['special']['std']
-        if len(std['stdout']) > 0:
-            print '> Std Out: '
-            for stdout in std['stdout']:
-                print '\t'+ str(stdout['data'])
+        std = strace_report['special']['std']
+        # if std.has_key('stdout'):
+        #     print '> Std Out: '
+        #     for stdout in std['stdout']:
+        #         print '\t'+ str(stdout['data'])
+        #
+        # if std.has_key('stderr'):
+        #     print '> Std Error: '
+        #     for stderr in std['stderr']:
+        #         print '\t'+ str(stderr['data'])
 
-        if len(std['stderr']) > 0:
-            print '> Std Error: '
-            for stderr in std['stderr']:
-                print '\t'+ str(stderr['data'])
+        # execves = strace_report['special']['execve']
+        # if len(execves) > 0:
+        #     print '> Execve Commands: '
+        #     for execve in execves:
+        #         if execve['error']:
+        #             print '\t' + execve['command'], execve['error_info']
+        #         else:
+        #             print '\t'+ execve['command']
 
-        execves = s.report['special']['execve']
-        if len(execves) > 0:
-            print '> Execve Commands: '
-            for execve in execves:
-                if execve['error']:
-                    print '\t' + execve['command'], execve['error_info']
-                else:
-                    print '\t'+ execve['command']
-
-        unlinks = s.report['special']['unlink']
+        unlinks = strace_report['special']['unlink']
         if len(unlinks) > 0:
             print '> Unlink: '
             for unlink in unlinks:
@@ -1255,7 +1277,7 @@ if __name__ == "__main__":
                 else:
                     print '\t' + unlink['file_name']
 
-        mkdirs = s.report['special']['mkdir']
+        mkdirs = strace_report['special']['mkdir']
         if len(mkdirs) > 0:
             print '> Mkdir: '
             for mkdir in mkdirs:
@@ -1264,7 +1286,7 @@ if __name__ == "__main__":
                 else:
                     print '\t' + mkdir['file_name']
 
-        networks = s.report['network']
+        networks = strace_report['network']
         if len(networks) > 0:
             print '> Network: '
             for network in networks:
