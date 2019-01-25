@@ -1,5 +1,5 @@
 # stracer
-parse strace log
+Stracer is a tool for parse strace log, and print some suspecial syscalls.
 
 Based on https://github.com/johnlcf/Stana
 
