@@ -12,7 +12,7 @@ import json
 import traceback
 import logging
 import shutil
-import ssdeep
+#import ssdeep
 import os
 
 DROP_FLODER = '/tmp/'
@@ -966,7 +966,7 @@ class StatStatics(StatBase):
         self.syscall_order = ''
         self.result['summary'] = ''
         self.result['syscall'] = []
-        self.result['syscall_ssdeep'] = ''
+        #self.result['syscall_ssdeep'] = ''
 
     def getSyscallHooks(self):
         return {"ALL": self.record}
@@ -994,7 +994,7 @@ class StatStatics(StatBase):
         self.result['syscall'].append(tmp_syscall)
 
     def jsonOutput(self):
-        self.result['syscall_ssdeep'] = ssdeep.hash(self.syscall_order)
+        #self.result['syscall_ssdeep'] = ssdeep.hash(self.syscall_order)
         jsonresult = ''
         jsonresult += "\n  time     seconds     calls syscall"
         jsonresult += "\n------ ----------- --------- ----------------"
